@@ -10,7 +10,7 @@ type Block struct{
 	nonce int 
 	previousHash string
 	timestamp int64
-	transactions []string
+	transactions []*Transactions
 }
 
 func NewBlock(nonce int, previousHash string)*Block{
@@ -24,7 +24,7 @@ func (b *Block) Print(){
 	fmt.Printf("TimeStamp %d\n",b.timestamp)
 	fmt.Printf("nonce %d\n",b.nonce)
 	fmt.Printf("previous Hash %s\n",b.previousHash)
-	fmt.Printf("transactions %s\n",b.transactions)
+	fmt.Printf("transactions %+v\n",b.transactions)
 }
 
 func (b *Block)Hash() string{
@@ -37,7 +37,7 @@ func (b *Block) MarshalJSON()([]byte,error){
 		TimeStamp int64 `json:"timestamp"`
 		Nonce int `json:"nonce"`
 		PreviousHash string `json:"previousHash"`
-		Transactions []string `json:"transaction"`
+		Transactions []*Transactions `json:"transaction"`
 	}{
 		TimeStamp:b.timestamp,
 		Nonce:b.nonce,

@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 type Chain struct{
-	transactionsPool []string
+	transactionsPool []*Transactions
 	chains []*Block
 }
 func NewChain() *Chain{
@@ -27,4 +27,8 @@ func (bc * Chain) Print(){
 
 func (bc *Chain) LastBlock() *Block{
 	return bc.chains[len(bc.chains)-1]
+}
+func (bc *Chain) AddTransaction(senderAddress,ReceiverAddress string, value float64) {
+	transaction:=NewTransaction(senderAddress,ReceiverAddress,value)
+	bc.transactionsPool=append(bc.transactionsPool,transaction)
 }

@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+var (
+	Mining_Difficulty = 3
+)
+
 type Chain struct {
 	transactionsPool []*Transactions
 	chains           []*Block
@@ -35,4 +39,28 @@ func (bc *Chain) LastBlock() *Block {
 func (bc *Chain) AddTransaction(senderAddress, ReceiverAddress string, value float64) {
 	transaction := NewTransaction(senderAddress, ReceiverAddress, value)
 	bc.transactionsPool = append(bc.transactionsPool, transaction)
+}
+func (bc *Chain) CopyTransactionPool() []*Transactions {
+	transactions := make([]*Transactions, 0)
+	for _, t := range bc.transactionsPool {
+		transactions = append(transactions,
+			NewTransaction(t.senderBlockChainAddress, t.receiverBlockChainAddress, t.amount))
+	}
+	return transactions
+}
+func (bc *Chain) ValidPoof(nonce int, previousHash [32]byte, transaction []*Transactions, difficulty int) bool {
+	zeros := strings.Repeat("0", difficulty)
+	guessBlock := Block{nonce, previousHash, 0, transaction}
+	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
+	fmt.Println(guessHashStr)
+	return guessHashStr[:difficulty] == zeros
+}
+func (bc *Chain) ProofOfWork() int {
+	transaction := bc.CopyTransactionPool()
+	previousHash := bc.LastBlock().Hash()
+	nonce := 0
+	for !bc.ValidPoof(nonce, previousHash, transaction, Mining_Difficulty) {
+		nonce += 1
+	}
+	return nonce
 }

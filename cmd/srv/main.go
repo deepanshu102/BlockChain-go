@@ -10,18 +10,18 @@ func init() {
 	log.SetPrefix("BlockChain:")
 }
 func main() {
+	// myBlockChainAddress := "myBlockChainAddress"
+	blockChain := models.NewChain()
+	blockChain.Print()
 
-	blockchain := models.NewChain()
-	blockchain.Print()
-	blockchain.AddTransaction("A", "B", 1.0)
-	previousHash := blockchain.LastBlock().Hash()
-	nonce := blockchain.ProofOfWork()
-	blockchain.CreateBlock(nonce, previousHash)
-	blockchain.Print()
-	blockchain.AddTransaction("C", "D", 2.0)
-	blockchain.AddTransaction("X", "Y", 3.0)
-	previousHash = blockchain.LastBlock().Hash()
-	nonce = blockchain.ProofOfWork()
-	blockchain.CreateBlock(nonce, previousHash)
-	blockchain.Print()
+	blockChain.AddTransaction("A", "B", 1.0)
+	previousHash := blockChain.LastBlock().Hash()
+	blockChain.CreateBlock(5, previousHash)
+	blockChain.Print()
+
+	blockChain.AddTransaction("C", "D", 2.0)
+	blockChain.AddTransaction("X", "Y", 3.0)
+	previousHash = blockChain.LastBlock().Hash()
+	blockChain.CreateBlock(2, previousHash)
+	blockChain.Print()
 }

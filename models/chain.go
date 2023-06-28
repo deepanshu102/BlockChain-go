@@ -79,3 +79,19 @@ func (bc *Chain) Mining() bool {
 	log.Println("action:mining, Status=success")
 	return true
 }
+
+func (bc *Chain) CalculatTotalAmount(blockchainAddress string) float64 {
+	var totalAmount float64 = 0.0
+	for _, b := range bc.chains {
+		for _, t := range b.transactions {
+			value := t.amount
+			if blockchainAddress == t.receiverBlockChainAddress {
+				totalAmount += value
+			}
+			if blockchainAddress == t.senderBlockChainAddress {
+				totalAmount -= value
+			}
+		}
+	}
+	return totalAmount
+}

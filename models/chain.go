@@ -18,10 +18,10 @@ type Chain struct {
 	blockChainAddress string
 }
 
-func NewChain() *Chain {
+func NewChain(blockChainAddress string) *Chain {
 	block := &Block{}
 	bc := new(Chain)
-	// bc.blockChainAddress = blockChainAddress
+	bc.blockChainAddress = blockChainAddress
 	bc.CreateBlock(0, block.Hash())
 	return bc
 }
@@ -58,7 +58,7 @@ func (bc *Chain) ValidPoof(nonce int, previousHash [32]byte, transaction []*Tran
 	zeros := strings.Repeat("0", difficulty)
 	guessBlock := Block{nonce, previousHash, 0, transaction}
 	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
-	// fmt.Println(guessHashStr)
+	fmt.Println(guessHashStr)
 	return guessHashStr[:difficulty] == zeros
 }
 func (bc *Chain) ProofOfWork() int {

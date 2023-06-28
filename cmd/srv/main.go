@@ -11,7 +11,7 @@ func init() {
 }
 func main() {
 	// myBlockChainAddress := "myBlockChainAddress"
-	blockChain := models.NewChain()
+	blockChain := models.NewChain(models.MINING_SENDER)
 	blockChain.Print()
 
 	blockChain.AddTransaction("A", "B", 1.0)

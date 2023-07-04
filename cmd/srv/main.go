@@ -42,9 +42,16 @@ func main() {
 	// fmt.Printf("C %.1f\n", blockChain.CalculatTotalAmount("C"))
 	// fmt.Printf("D %.1f\n", blockChain.CalculatTotalAmount("D"))
 
+	// w := wallets.NewWallet()
+	// fmt.Printf("%+v\n", w.PrivateKey())
+	// fmt.Println(w.PrivateKeyStr())
+	// fmt.Printf("%+v\n", w.PublicKey())
+	// fmt.Println(w.PublicKeyStr())
 	w := wallets.NewWallet()
-	fmt.Printf("%+v\n", w.PrivateKey())
 	fmt.Println(w.PrivateKeyStr())
-	fmt.Printf("%+v\n", w.PublicKey())
 	fmt.Println(w.PublicKeyStr())
+	fmt.Println(w.BlockchainAddress())
+
+	t := wallets.NewTransaction(w.PrivateKey(), w.PublicKey(), w.BlockchainAddress(), "B", 1.0)
+	fmt.Printf("signature %s\n", t.GenerateSignature())
 }

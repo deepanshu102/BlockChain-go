@@ -1,18 +1,21 @@
 package block
 
 import (
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 	"time"
+
+	"git.deep.block/utils"
 )
 
 var (
-	MINING_DIFFICULTY = 3
-	MINING_SENDER     = "Miner Address"
-	MINING_REWARD     = 1.0
+	MINING_DIFFICULTY         = 3
+	MINING_SENDER             = "Miner Address"
+	MINING_REWARD     float64 = 1.0
 )
 
 // Its one block struct and that represent the block of our Blockchain
@@ -124,9 +127,29 @@ func (bc *Chain) Print() {
 	fmt.Printf("%s\n", strings.Repeat("*", 25))
 }
 
-func (bc *Chain) AddTransaction(senderAddress, receiverAddress string, value float64) {
+func (bc *Chain) AddTransaction(senderAddress, receiverAddress string, value float64, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
 	t := NewTransaction(senderAddress, receiverAddress, value)
-	bc.transactionsPool = append(bc.transactionsPool, t)
+	if senderAddress == MINING_SENDER {
+		bc.transactionsPool = append(bc.transactionsPool, t)
+		return true
+	}
+	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
+		// if bc.CalculatTotalAmount(senderAddress) < value {
+		// 	log.Printf("ERROR: Not Enough in a wallet")
+		// 	return false
+		// }
+
+		bc.transactionsPool = append(bc.transactionsPool, t)
+		return true
+	} else {
+		log.Println("ERROR: Verify Transaction")
+	}
+	return false
+}
+func (bc *Chain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transactions) bool {
+	m, _ := json.Marshal(t)
+	h := sha256.Sum256([]byte(m))
+	return ecdsa.Verify(senderPublicKey, h[:], s.R, s.S)
 }
 func (bc *Chain) CopyTransactionPool() []*Transactions {
 	transactions := make([]*Transactions, 0)
@@ -154,7 +177,7 @@ func (bc *Chain) ProofOfWork() int {
 }
 
 func (bc *Chain) Mining() bool {
-	bc.AddTransaction(MINING_SENDER, bc.blockChainAddress, MINING_REWARD)
+	bc.AddTransaction(MINING_SENDER, bc.blockChainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
@@ -162,7 +185,7 @@ func (bc *Chain) Mining() bool {
 	return true
 }
 
-func (bc *Chain) CalculatTotalAmount(blockchainAddress string) float64 {
+func (bc *Chain) CalculateTotalAmount(blockchainAddress string) float64 {
 	var totalAmount float64 = 0.0
 	for _, b := range bc.chains {
 		for _, t := range b.transactions {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -8,6 +10,7 @@ import (
 	"path"
 	"strconv"
 
+	"git.deep.block/utils"
 	"git.deep.block/wallets"
 )
 
@@ -53,8 +56,51 @@ func (ws *WalletServer) Wallet(w http.ResponseWriter, r *http.Request) {
 		log.Println("ERROR: Invalid HTTP Method")
 	}
 }
+func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		w.Header().Add("Content-Type", "application/json")
+		decorder := json.NewDecoder(r.Body)
+		var t wallets.TransactionRequest
+		err := decorder.Decode(&t)
+		if err != nil {
+			log.Printf("ERROR:%v", err)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		if !t.Validate() {
+			log.Printf("ERROR:Fields are missing")
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		// fmt.Println(*t.RecipientBlockchainAddress)
+		// fmt.Println(*t.SenderBlockchainAddress)
+		// fmt.Println(*t.SenderPrivateKey)
+		// fmt.Println(*t.SenderPublicKey)
+		// fmt.Println(*t.Value)
+
+		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
+		privateKey := utils.PrivateKeyFromString(*t.SenderPrivateKey, publicKey)
+		value, err := strconv.ParseFloat(*t.Value, 32)
+		if err != nil {
+			log.Println("ERROR: parse error")
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		value32 := float32(value)
+		fmt.Println(publicKey)
+		fmt.Println(privateKey)
+		fmt.Println(value32)
+		io.WriteString(w, string(utils.JsonStatus("success")))
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("ERROR: Invalid HTTP Method")
+	}
+}
 func (ws *WalletServer) Run() {
 	http.HandleFunc("/", ws.Index)
 	http.HandleFunc("/wallet", ws.Wallet)
+	http.HandleFunc("/transaction", ws.CreateTransaction)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(ws.Port())), nil))
+
 }

@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <title>Wallet</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+            $(function(){
+
+                $.ajax({
+                    url:'wallet',
+                    type:'POST',
+                    success: function(response){
+                        $('#publicKey').val(response[publicKey]);
+                        $('#privateKey').val(response[privateKey]);
+                        $('#blockchainAddress').val(response[blockchainAddress]);
+                        console.log(response)
+                    },
+                    error: function(error){
+                        console.error(error)
+                    }
+                })
+            })
+        </script>
 </head>
 <body>
 
@@ -13,13 +31,13 @@
         <button id="reload_wallet">Reload Wallet</button>
 
         <p>Public  Key</p>
-        <textarea id="public_key" rows="2" cols="100"></textarea>
+        <textarea id="publicKey" rows="2" cols="100"></textarea>
 
         <p>Private  Key</p>
-        <textarea id="private_key" rows="1" cols="100"></textarea>
+        <textarea id="privateKey" rows="1" cols="100"></textarea>
 
         <p>Blockchain Address</p>
-        <textarea id="blockchain_address" rows="1" cols="100"></textarea>
+        <textarea id="blockchainAddress" rows="1" cols="100"></textarea>
 
     </div>
 

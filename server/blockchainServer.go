@@ -114,6 +114,7 @@ func (bcs *BlockChainServer) Transactions(w http.ResponseWriter, req *http.Reque
 func (bcs *BlockChainServer) Mine(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		w.Header().Add("Content-Type", "application/json")
 		bc := bcs.GetBlockChain()
 		isMined := bc.Mining()
 		var m []byte
@@ -124,7 +125,6 @@ func (bcs *BlockChainServer) Mine(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			m = utils.JsonStatus("success")
 		}
-		w.Header().Add("Content-Type", "application/json")
 		io.WriteString(w, string(m))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -134,13 +134,28 @@ func (bcs *BlockChainServer) Mine(w http.ResponseWriter, r *http.Request) {
 func (bcs *BlockChainServer) StartMine(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		w.Header().Add("Content-Type", "application/json")
 		bc := bcs.GetBlockChain()
 		bc.StartMining()
 
 		w.WriteHeader(http.StatusOK)
 		m := utils.JsonStatus("success")
+		io.WriteString(w, string(m[:]))
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("Error:Invalid HTTP Method")
+	}
+}
+func (bcs *BlockChainServer) Amount(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
 		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(m))
+		blockchainAddress := r.URL.Query().Get("blockchain_address")
+		amount := bcs.GetBlockChain().CalculateTotalAmount(blockchainAddress)
+		ar := &block.AmountResponse{amount}
+		m, _ := ar.MarshalJSON()
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(m[:]))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println("Error:Invalid HTTP Method")
@@ -151,5 +166,6 @@ func (bcs *BlockChainServer) Run() {
 	http.HandleFunc("/transactions", bcs.Transactions)
 	http.HandleFunc("/mine", bcs.Mine)
 	http.HandleFunc("/mine/start", bcs.StartMine)
+	http.HandleFunc("/amount", bcs.Amount)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcs.Port())), nil))
 }

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 
 	"git.deep.block/block"
+	"git.deep.block/utils"
 	"git.deep.block/wallets"
 )
 
@@ -55,7 +58,61 @@ func (bcs *BlockChainServer) GetChain(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
+func (bcs *BlockChainServer) Transactions(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		w.Header().Add("Content-Type", "application/json")
+		bc := bcs.GetBlockChain()
+		transactions := bc.TransactionPool()
+		m, _ := json.Marshal(struct {
+			Transactions []*block.Transactions `json:"transactions"`
+			Length       int                   `json:"length"`
+		}{
+			Transactions: transactions,
+			Length:       len(transactions),
+		})
+		io.WriteString(w, string(m[:]))
+
+	case http.MethodPost:
+		decoder := json.NewDecoder(req.Body)
+		var t block.TransactionRequest
+		err := decoder.Decode(&t)
+		if err != nil {
+			log.Printf("ERROR: %v", err)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		if !t.Validate() {
+			log.Println("ERROR: missing field(s)")
+			fmt.Printf("\n\n%+v\n\n\n", t)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
+		signature := utils.SignatureFromString(*t.Signature)
+		fmt.Printf("Public key:- %064x%064x\n", publicKey.X.Bytes(), publicKey.Y.Bytes())
+		bc := bcs.GetBlockChain()
+		isCreated := bc.CreateTransaction(*t.SenderBlockchainAddress,
+			*t.RecipientBlockchainAddress, *t.Value, publicKey, signature)
+
+		w.Header().Add("Content-Type", "application/json")
+		var m []byte
+		if !isCreated {
+			w.WriteHeader(http.StatusBadRequest)
+			m = utils.JsonStatus("fail")
+		} else {
+			w.WriteHeader(http.StatusCreated)
+			m = utils.JsonStatus("success")
+		}
+		io.WriteString(w, string(m))
+	default:
+		log.Println("ERROR: Invalid HTTP Method")
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
 func (bcs *BlockChainServer) Run() {
 	http.HandleFunc("/", bcs.GetChain)
+	http.HandleFunc("/transactions", bcs.Transactions)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcs.Port())), nil))
 }

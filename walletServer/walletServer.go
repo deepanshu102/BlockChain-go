@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -10,6 +11,7 @@ import (
 	"path"
 	"strconv"
 
+	"git.deep.block/transactionAPI/block"
 	"git.deep.block/utils"
 	"git.deep.block/wallets"
 )
@@ -87,11 +89,35 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, r *http.Request
 			io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
-		value32 := float32(value)
+		value64 := float32(value)
 		fmt.Println(publicKey)
 		fmt.Println(privateKey)
-		fmt.Println(value32)
-		io.WriteString(w, string(utils.JsonStatus("success")))
+		fmt.Println(value64)
+
+		WalletTransaction := wallets.NewTransaction(privateKey, publicKey, *t.SenderBlockchainAddress, *t.RecipientBlockchainAddress, value64)
+		signature := WalletTransaction.GenerateSignature()
+		signatureStr := signature.String()
+		blockChainTransaction := &block.TransactionRequest{
+			SenderBlockchainAddress:    t.SenderBlockchainAddress,
+			RecipientBlockchainAddress: t.RecipientBlockchainAddress,
+			Value:                      &value64,
+			SenderPublicKey:            t.SenderPublicKey,
+			Signature:                  &signatureStr,
+		}
+		m, _ := json.Marshal(blockChainTransaction)
+		fmt.Printf("%+v\n", string(m[:]))
+		buf := bytes.NewBuffer(m)
+		resp, err := http.Post(ws.Gateway()+"/transactions", "application/json", buf)
+		if err != nil {
+			log.Printf("ERROR:%v", err)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		if resp.StatusCode == 201 {
+			io.WriteString(w, string(utils.JsonStatus("success")))
+			return
+		}
+		io.WriteString(w, string(utils.JsonStatus("fail")))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println("ERROR: Invalid HTTP Method")

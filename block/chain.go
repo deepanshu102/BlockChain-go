@@ -15,7 +15,7 @@ import (
 var (
 	MINING_DIFFICULTY         = 3
 	MINING_SENDER             = "Miner Address"
-	MINING_REWARD     float64 = 1.0
+	MINING_REWARD     float32 = 1.0
 )
 
 // Its one block struct and that represent the block of our Blockchain
@@ -65,10 +65,10 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 type Transactions struct {
 	senderBlockChainAddress   string
 	receiverBlockChainAddress string
-	amount                    float64
+	amount                    float32
 }
 
-func NewTransaction(senderAddress, receiverAddress string, amount float64) *Transactions {
+func NewTransaction(senderAddress, receiverAddress string, amount float32) *Transactions {
 	return &Transactions{
 		senderBlockChainAddress:   senderAddress,
 		receiverBlockChainAddress: receiverAddress,
@@ -89,7 +89,7 @@ func (t *Transactions) MarshalJSON() ([]byte, error) {
 		struct {
 			SenderBlockChainAddress   string  `json:"senderBlockChainAddress"`
 			ReceiverBlockChainAddress string  `json:"receiverBlockchainAddress"`
-			Amount                    float64 `json:"amount"`
+			Amount                    float32 `json:"amount"`
 		}{
 			SenderBlockChainAddress:   t.senderBlockChainAddress,
 			ReceiverBlockChainAddress: t.receiverBlockChainAddress,
@@ -140,30 +140,41 @@ func (bc *Chain) Print() {
 	}
 	fmt.Printf("%s\n", strings.Repeat("*", 25))
 }
-func (bc *Chain) CreateTransaction(senderAddress, receiverAddress string, value float64, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
-	isTransacted := bc.AddTransaction(senderAddress, receiverAddress, value, senderPublicKey, s)
+func (bc *Chain) CreateTransaction(sender string, recipient string, value float32,
+	senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
+	isTransacted := bc.AddTransaction(sender, recipient, value, senderPublicKey, s)
+
+	// TODO
+	// Sync
 
 	return isTransacted
 }
-func (bc *Chain) AddTransaction(senderAddress, receiverAddress string, value float64, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
-	t := NewTransaction(senderAddress, receiverAddress, value)
-	if senderAddress == MINING_SENDER {
+
+func (bc *Chain) AddTransaction(sender string, recipient string, value float32,
+	senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
+	t := NewTransaction(sender, recipient, value)
+
+	if sender == MINING_SENDER {
 		bc.transactionsPool = append(bc.transactionsPool, t)
 		return true
 	}
-	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
-		// if bc.CalculatTotalAmount(senderAddress) < value {
-		// 	log.Printf("ERROR: Not Enough in a wallet")
-		// 	return false
-		// }
 
+	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
+		/*
+			if bc.CalculateTotalAmount(sender) < value {
+				log.Println("ERROR: Not enough balance in a wallet")
+				return false
+			}
+		*/
 		bc.transactionsPool = append(bc.transactionsPool, t)
 		return true
 	} else {
 		log.Println("ERROR: Verify Transaction")
 	}
 	return false
+
 }
+
 func (bc *Chain) VerifyTransactionSignature(
 	senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transactions) bool {
 	m, _ := json.Marshal(t)
@@ -205,8 +216,8 @@ func (bc *Chain) Mining() bool {
 	return true
 }
 
-func (bc *Chain) CalculateTotalAmount(blockchainAddress string) float64 {
-	var totalAmount float64 = 0.0
+func (bc *Chain) CalculateTotalAmount(blockchainAddress string) float32 {
+	var totalAmount float32 = 0.0
 	for _, b := range bc.chains {
 		for _, t := range b.transactions {
 			value := t.amount
@@ -224,7 +235,7 @@ func (bc *Chain) CalculateTotalAmount(blockchainAddress string) float64 {
 type TransactionRequest struct {
 	SenderBlockchainAddress    *string  `json:"sender_blockchain_address"`
 	RecipientBlockchainAddress *string  `json:"recipient_blockchain_address"`
-	Value                      *float64 `json:"value"`
+	Value                      *float32 `json:"value"`
 	SenderPublicKey            *string  `json:"sender_public_key"`
 	Signature                  *string  `json:"signature"`
 }

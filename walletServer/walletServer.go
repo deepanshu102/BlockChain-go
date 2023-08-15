@@ -11,7 +11,7 @@ import (
 	"path"
 	"strconv"
 
-	"git.deep.block/transactionAPI/block"
+	"git.deep.block/block"
 	"git.deep.block/utils"
 	"git.deep.block/wallets"
 )

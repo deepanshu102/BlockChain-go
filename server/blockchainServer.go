@@ -13,7 +13,7 @@ import (
 	"git.deep.block/wallets"
 )
 
-var cache map[string]*block.Chain = make(map[string]*block.Chain)
+var cache map[string]*block.Blockchain = make(map[string]*block.Blockchain)
 
 type BlockChainServer struct {
 	port uint16
@@ -29,15 +29,15 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "Hello, world")
 }
 
-func (bcs *BlockChainServer) GetBlockChain() *block.Chain {
+func (bcs *BlockChainServer) GetBlockChain() *block.Blockchain {
 	bc, ok := cache["blockchain"]
 	if !ok {
 		minerWallet := wallets.NewWallet()
-		bc = block.NewChain(minerWallet.BlockchainAddress(), bcs.Port())
+		bc = block.NewBlockchain(minerWallet.BlockchainAddress(), bcs.Port())
 		cache["blockchain"] = bc
 		log.Printf("Private key  %v", minerWallet.PrivateKeyStr())
 		log.Printf("Public key  %v", minerWallet.PublicKeyStr())
-		log.Printf("block-chain Address  %v", minerWallet.BlockchainAddress())
+		log.Printf("block-Blockchain Address  %v", minerWallet.BlockchainAddress())
 
 	}
 	return bc
@@ -65,8 +65,8 @@ func (bcs *BlockChainServer) Transactions(w http.ResponseWriter, req *http.Reque
 		bc := bcs.GetBlockChain()
 		transactions := bc.TransactionPool()
 		m, _ := json.Marshal(struct {
-			Transactions []*block.Transactions `json:"transactions"`
-			Length       int                   `json:"length"`
+			Transactions []*block.Transaction `json:"transactions"`
+			Length       int                  `json:"length"`
 		}{
 			Transactions: transactions,
 			Length:       len(transactions),

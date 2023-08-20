@@ -51,7 +51,7 @@ func (b *Block) PreviousHash() [32]byte {
 func (b *Block) Nonce() int {
 	return b.nonce
 }
-func (b *Block) Transaction() []*Transaction {
+func (b *Block) Transactions() []*Transaction {
 	return b.transactions
 }
 
@@ -174,6 +174,7 @@ func (bc *Blockchain) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	b := NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
@@ -298,7 +299,8 @@ func (bc *Blockchain) Mining() bool {
 	log.Println("action=mining, status=success")
 
 	for _, n := range bc.neighbors {
-		endpoint := fmt.Sprintf("http;//%s/consensus", n)
+		endpoint := fmt.Sprintf("http://%s/consensus", n)
+		log.Printf("%s", endpoint)
 		client := &http.Client{}
 		req, _ := http.NewRequest("PUT", endpoint, nil)
 		resp, _ := client.Do(req)
@@ -337,9 +339,11 @@ func (bc *Blockchain) ValidChain(chain []*Block) bool {
 		if b.previousHash != preBlock.Hash() {
 			return false
 		}
-		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transaction(), MINING_DIFFICULTY) {
+
+		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transactions(), MINING_DIFFICULTY) {
 			return false
 		}
+
 		preBlock = b
 		currentIndex += 1
 	}
@@ -350,13 +354,14 @@ func (bc *Blockchain) ResolveConflicts() bool {
 	var longestChain []*Block = nil
 	maxLength := len(bc.chain)
 	for _, n := range bc.neighbors {
-		endpoint := fmt.Sprintf("http://%s/chain", n)
+		endpoint := fmt.Sprintf("http://%s/chains", n)
 		resp, _ := http.Get(endpoint)
 		if resp.StatusCode == 200 {
 			var bcResp Blockchain
 			decoder := json.NewDecoder(resp.Body)
 			_ = decoder.Decode(&bcResp)
 			chain := bcResp.Chain()
+			log.Printf("Detatils len(chain):-%d , result:- %s", len(chain), (bc.ValidChain(chain)))
 			if len(chain) > maxLength && bc.ValidChain(chain) {
 				maxLength = len(chain)
 				longestChain = chain
@@ -403,13 +408,13 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 
 func (t *Transaction) UnmarshalJSON(data []byte) error {
 	v := &struct {
-		Sender    string  `json:"sender_blockchain_address"`
-		Recipient string  `json:"recipient_blockchain_address"`
-		Value     float32 `json:"value"`
+		Sender    *string  `json:"sender_blockchain_address"`
+		Recipient *string  `json:"recipient_blockchain_address"`
+		Value     *float32 `json:"value"`
 	}{
-		Sender:    t.senderBlockchainAddress,
-		Recipient: t.recipientBlockchainAddress,
-		Value:     t.value,
+		Sender:    &t.senderBlockchainAddress,
+		Recipient: &t.recipientBlockchainAddress,
+		Value:     &t.value,
 	}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err

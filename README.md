@@ -1,8 +1,27 @@
 # Block-Chain
 Block chain is a distributed database that maintains the records of transactions. It can be used to store
 
-> ## <U> Block-Chains</u>
->> <U> <B> chain.go</B></U>
+> # <U> Block-Chains</u>
+>> ## <U> <B> block.go</B></U>
+>>> In this file , we have created one block class that holdes multiple elements
+>>>> #### Element of Block class
+>>>>> 1. <u>timestamp</u> : that help me to store the time record of each block
+>>>>> 2. <u>nonce</u> : nonce is helpful to know that that block is correct or not
+>>>>> 3. <u>previousHash</u>: previous hash represent the previous block in form of hash
+>>>>> 4. <u>transactions</u>: transactions is useful for all the transactions.
+
+>>> **Block**. There is a few methods/functionality using for block.
+>>>><u><b>FUNCTIONALITY OF BLOCK</B></u>
+>>>>   1. **NewBlock** create a new Block. That helps to create a new block in our block chain.
+>>>>   2. **Print**  that helps to print the block in our blockchain
+>>>>   3. **Hash** Hash a block using SHA256. this functionality helps to generate a hash for store in new block.
+>>>>   4. **MashalJSON** it's a overridden method that helps you for marshal json. also help for print block into json format. It's helps to stringify the block through JSON format then we can able to convert into HASH 
+>>>>   5. **Nonce**  : this functionality is used for retrive the value of nonce from particular block.
+>>>>   6. **PreviousHash** : this functionality is used for retrive the value of previous hash from particular block.
+>>>>   7. **Transactions** : this functionality is used for retrive the values of transactions from particular block.
+>>>>   6. **UnmarshalJSON** it's a overridden method that helps you for Unmarshal json. also help for print block into json format. It's helps to stringify the block through JSON format then we can able to convert into HASH 
+
+>> ## <U> <B> chain.go</B></U>
 >>> It's a file in which we are just create a classes  
 >>>> **Block**. There is a few methods/functionality using for block.
 >>>><u><b>FUNCTIONALITY OF BLOCK</B></u>
